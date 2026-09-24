@@ -55,8 +55,6 @@ const verifyOtpForRecord = async (record, otp, purpose) => {
     throw new AppError(400, 'Invalid OTP.');
   }
 
-  clearOtpData(record);
-  await record.save();
   return true;
 };
 
@@ -414,14 +412,21 @@ const resetPassword = async ({ email, otp, newPassword, confirmPassword }) => {
     throw new AppError(400, 'Password confirmation does not match.');
   }
 
-  await verifyOtpForRecord(user, otp, OTP_PURPOSES.PASSWORD_RESET);
+await verifyOtpForRecord(user, otp, OTP_PURPOSES.PASSWORD_RESET);
 
-  user.password = await hashPassword(newPassword);
-  user.refreshTokenHash = null;
-  user.refreshTokenExpiresAt = null;
-  await user.save();
+user.password = await hashPassword(newPassword);
+user.refreshTokenHash = null;
+user.refreshTokenExpiresAt = null;
+
+clearOtpData(user);
+
+await user.save();
+
+  
 
   return { message: 'Password reset successfully.' };
+
+
 };
 
 const resendOtp = async ({ email, purpose }) => {
