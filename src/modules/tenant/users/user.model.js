@@ -61,6 +61,14 @@ const userSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    passwordResetVerified: {
+      type: Boolean,
+      default: false,
+    },
+    passwordResetVerifiedAt: {
+      type: Date,
+      default: null,
+    },
     refreshTokenHash: {
       type: String,
       default: null,

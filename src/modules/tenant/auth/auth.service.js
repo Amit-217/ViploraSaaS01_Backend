@@ -24,6 +24,11 @@ const clearOtpData = (record) => {
   record.otpAttempts = 0;
 };
 
+const clearPasswordResetVerification = (record) => {
+  record.passwordResetVerified = false;
+  record.passwordResetVerifiedAt = null;
+};
+
 const createOtpRecord = async (record, purpose, otp) => {
   record.otp = await bcrypt.hash(otp, 10);
   record.otpPurpose = purpose;
@@ -380,6 +385,10 @@ const forgotPassword = async ({ email }) => {
     return { message: 'If an account exists, a password reset OTP has been sent.' };
   }
 
+  user.passwordResetVerified = false;
+  user.passwordResetVerifiedAt = null;
+  await user.save();
+
   const otp = generateOtp(Number(process.env.OTP_LENGTH || 6));
   await createOtpRecord(user, OTP_PURPOSES.PASSWORD_RESET, otp);
   await sendPasswordResetOTP({ email: user.email, otp });
@@ -397,7 +406,14 @@ const verifyResetOtp = async ({ email, otp }) => {
 
   await verifyOtpForRecord(user, otp, OTP_PURPOSES.PASSWORD_RESET);
 
-  return { message: 'OTP verified successfully.' };
+  user.passwordResetVerified = true;
+  user.passwordResetVerifiedAt = new Date();
+  await user.save();
+
+  return {
+    message: 'OTP verified successfully. You can now reset your password.',
+    canReset: true,
+  };
 };
 
 const resetPassword = async ({ email, otp, newPassword, confirmPassword }) => {
@@ -412,21 +428,26 @@ const resetPassword = async ({ email, otp, newPassword, confirmPassword }) => {
     throw new AppError(400, 'Password confirmation does not match.');
   }
 
-await verifyOtpForRecord(user, otp, OTP_PURPOSES.PASSWORD_RESET);
+  if (!user.passwordResetVerified || !user.passwordResetVerifiedAt) {
+    throw new AppError(400, 'Please verify the reset OTP before setting a new password.');
+  }
 
-user.password = await hashPassword(newPassword);
-user.refreshTokenHash = null;
-user.refreshTokenExpiresAt = null;
+  if (new Date(user.passwordResetVerifiedAt).getTime() + OTP_TTL < Date.now()) {
+    clearPasswordResetVerification(user);
+    await user.save();
+    throw new AppError(400, 'Password reset verification has expired. Please request a new OTP.');
+  }
 
-clearOtpData(user);
+  await verifyOtpForRecord(user, otp, OTP_PURPOSES.PASSWORD_RESET);
 
-await user.save();
-
-  
+  user.password = await hashPassword(newPassword);
+  user.refreshTokenHash = null;
+  user.refreshTokenExpiresAt = null;
+  clearOtpData(user);
+  clearPasswordResetVerification(user);
+  await user.save();
 
   return { message: 'Password reset successfully.' };
-
-
 };
 
 const resendOtp = async ({ email, purpose }) => {
@@ -440,6 +461,11 @@ const resendOtp = async ({ email, purpose }) => {
 
   if (!record) {
     return { message: 'If an account exists, a new OTP has been sent.' };
+  }
+
+  if (purpose === OTP_PURPOSES.PASSWORD_RESET && record.passwordResetVerified !== undefined) {
+    record.passwordResetVerified = false;
+    record.passwordResetVerifiedAt = null;
   }
 
   const otp = generateOtp(Number(process.env.OTP_LENGTH || 6));
