@@ -31,6 +31,7 @@ const validate = (schema) => (req, res, next) => {
  */
 router.post('/register', validate(registerValidation), authController.register);
 router.post('/verify-email', validate(verifyEmailValidation), authController.verifyEmail);
+router.post('/send-admin-email-verification', validate(adminEmailValidation), authController.sendAdminEmailVerification);
 router.post('/verify-admin-email', validate(adminEmailValidation), authController.verifyAdminEmail);
 router.post('/register-admin', validate(adminEmailValidation), authController.registerAdmin);
 router.post('/finalize-registration', validate(adminEmailValidation), authController.registerAdmin);

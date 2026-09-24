@@ -12,7 +12,7 @@
     "email": "hello@acme.com"
   }
   ```
-- Purpose: start tenant registration and send a company email verification OTP
+- Purpose: start company registration and send a company email verification OTP
 
 ### Verify tenant email
 - Method: POST
@@ -25,6 +25,17 @@
   }
   ```
 
+### Send admin email verification
+- Method: POST
+- Route: `/api/auth/send-admin-email-verification`
+- Body:
+  ```json
+  {
+    "email": "admin@acme.com",
+    "companyEmail": "hello@acme.com"
+  }
+  ```
+
 ### Verify admin email
 - Method: POST
 - Route: `/api/auth/verify-admin-email`
@@ -33,6 +44,38 @@
   {
     "companyEmail": "hello@acme.com",
     "email": "admin@acme.com",
+    "otp": "123456"
+  }
+  ```
+
+### Register admin
+- Method: POST
+- Route: `/api/auth/register-admin`
+- Body:
+  ```json
+  {
+    "companyEmail": "hello@acme.com",
+    "email": "admin@acme.com",
+    "firstName": "Amit",
+    "lastName": "Chandure",
+    "password": "StrongPassword123",
+    "confirmPassword": "StrongPassword123",
+    "otp": "123456"
+  }
+  ```
+
+### Finalize registration
+- Method: POST
+- Route: `/api/auth/finalize-registration`
+- Body:
+  ```json
+  {
+    "companyEmail": "hello@acme.com",
+    "email": "admin@acme.com",
+    "firstName": "Amit",
+    "lastName": "Chandure",
+    "password": "StrongPassword123",
+    "confirmPassword": "StrongPassword123",
     "otp": "123456"
   }
   ```
@@ -157,6 +200,154 @@
 - Route: `/api/tenants/me`
 - Auth: required
 
+### Create tenant record
+- Method: POST
+- Route: `/api/tenants`
+- Body:
+  ```json
+  {
+    "name": "Acme Business",
+    "email": "hello@acme.com"
+  }
+  ```
+
+## Raw material endpoints
+
+### List raw material categories
+- Method: GET
+- Route: `/api/v1/raw-material-categories`
+- Auth: required
+
+### Create raw material category
+- Method: POST
+- Route: `/api/v1/raw-material-categories`
+- Auth: required
+- Body:
+  ```json
+  {
+    "name": "Chemicals"
+  }
+  ```
+
+### Get raw material category by ID
+- Method: GET
+- Route: `/api/v1/raw-material-categories/:id`
+- Auth: required
+
+### Update raw material category
+- Method: PATCH
+- Route: `/api/v1/raw-material-categories/:id`
+- Auth: required
+
+### Delete raw material category
+- Method: DELETE
+- Route: `/api/v1/raw-material-categories/:id`
+- Auth: required
+
+### List raw materials
+- Method: GET
+- Route: `/api/v1/raw-materials`
+- Auth: required
+
+### Create raw material
+- Method: POST
+- Route: `/api/v1/raw-materials`
+- Auth: required
+- Body:
+  ```json
+  {
+    "code": "RM-001",
+    "name": "Cotton Fiber",
+    "categoryId": "66c2f2e2d9d87f1a12345678",
+    "unit": "kg",
+    "minimumStock": 50
+  }
+  ```
+
+### Get raw material by ID
+- Method: GET
+- Route: `/api/v1/raw-materials/:id`
+- Auth: required
+
+### Update raw material
+- Method: PATCH
+- Route: `/api/v1/raw-materials/:id`
+- Auth: required
+
+### Delete raw material
+- Method: DELETE
+- Route: `/api/v1/raw-materials/:id`
+- Auth: required
+
+### List vendors
+- Method: GET
+- Route: `/api/v1/vendors`
+- Auth: required
+
+### Create vendor
+- Method: POST
+- Route: `/api/v1/vendors`
+- Auth: required
+- Body:
+  ```json
+  {
+    "name": "Apex Supply",
+    "phone": "+91 9876543210",
+    "email": "vendor@apex.com",
+    "address": "Delhi, India",
+    "gstin": "29ABCDE1234F1Z5"
+  }
+  ```
+
+### Get vendor by ID
+- Method: GET
+- Route: `/api/v1/vendors/:id`
+- Auth: required
+
+### Update vendor
+- Method: PATCH
+- Route: `/api/v1/vendors/:id`
+- Auth: required
+
+### Delete vendor
+- Method: DELETE
+- Route: `/api/v1/vendors/:id`
+- Auth: required
+
+### List material transactions
+- Method: GET
+- Route: `/api/v1/material-transactions`
+- Auth: required
+
+### Create material transaction
+- Method: POST
+- Route: `/api/v1/material-transactions`
+- Auth: required
+- Body:
+  ```json
+  {
+    "rawMaterialId": "66c2f2e2d9d87f1a12345678",
+    "type": "IN",
+    "direction": "IN",
+    "quantity": 25,
+    "rate": 120,
+    "vendorId": "66c2f2e2d9d87f1a12345679",
+    "referenceType": "PURCHASE",
+    "reason": "Monthly purchase",
+    "notes": "Arrival from vendor"
+  }
+  ```
+
+### Get material transaction by ID
+- Method: GET
+- Route: `/api/v1/material-transactions/:id`
+- Auth: required
+
+### Delete material transaction
+- Method: DELETE
+- Route: `/api/v1/material-transactions/:id`
+- Auth: required
+
 ## Security conventions
 - OTPs are purpose-specific
 - Email addresses are normalized to lowercase
@@ -165,6 +356,7 @@
 - Access tokens are short-lived
 - Admin routes require the `admin` role
 - Tenant IDs are fetched from the authenticated user context rather than request body
+- Raw material stock changes must be performed only through material transaction APIs to keep inventory history reliable
 
 ## Swagger
 The application also exposes Swagger docs at `/api-docs` when the app is running.
