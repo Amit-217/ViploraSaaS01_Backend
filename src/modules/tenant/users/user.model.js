@@ -74,6 +74,13 @@ const userSchema = new mongoose.Schema(
       enum: ['active', 'inactive'],
       default: 'active',
     },
+
+    profileImage: {
+  type: String,
+  default: "/uploads/profile/default.png",
+},
+
+
   },
   {
     timestamps: true,
